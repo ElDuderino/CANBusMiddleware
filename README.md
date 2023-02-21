@@ -19,6 +19,17 @@ We intend to support the following sensor data:
 8. Packs temperature - the 4 temperature sensor readings in degrees C
 9. SOH % - State of health indicator (0 - 100%). An indicator of the battery's ability to hold and release energy
 
+## Cloud Features ##
+
+The middleware will get the data in to the cloud and give us access to all the current dashboards in the Aretas platform and:
+- Support as many batteries / locations as we want
+- Support all sensors out of the box
+- Support Alerting on any sensor data (Current usage, Battery Condition, etc.)
+- Historical Analytics
+- AI data labeling and AI microservice support
+- Live data charts / streams
+- Condition reports 
+
 ## Running ##
 Will include more info here eventually, but to run it now, just run ``python3 backend_daemon.py``
 
