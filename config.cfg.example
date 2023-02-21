@@ -1,0 +1,31 @@
+[DEFAULT]
+# if you want to override the mac for one device, do so here
+self_mac = changeme
+
+# rest API parameters
+API_URL=https://iot.aretas.ca/rest/
+
+API_USERNAME = username
+API_PASSWORD = password
+
+[API]
+batch_mode = True
+
+# the API reporting interval
+# even if we get packets more frequently, we only send once every
+# report_interval milliseconds
+# e.g. 10000 ms (10 seconds)
+report_interval = 10000
+
+[SERIAL]
+serial_port = COM12
+baud_rate = 115200
+
+
+[DEBUG_SERIAL]
+# the interval between sending packets (in milliseconds)
+packet_mocker_interval_ms = 10
+# enable / disable the packet mocker
+packet_mocker_enable = True
+serial_port = COM13
+baud_rate = 115200
