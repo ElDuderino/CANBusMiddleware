@@ -38,6 +38,9 @@ class SerialPortReadWriter(Thread):
 
         self.sig_event = sig_event
 
+        self.attempted_decodes = 0
+        self.packet_count = 0
+
     def run(self):
         # enqueue bytes into the self.message_queue
         while True:
@@ -75,10 +78,26 @@ class SerialPortReadWriter(Thread):
 
         @return:
         """
-        buffer = self.ser.read_until()
+        buffer = bytearray()
+        done = False
+        while not done:
+            it = self.ser.read(1)
+            if it.decode() == '\n':
+                done = True
+                self.attempted_decodes += 1
+                packet = bytes(buffer)
+                buffer.clear()
+                payload = AretasPacket.parse_packet(packet)
 
-        payload = AretasPacket.parse_packet(buffer)
+                if payload is not None:
+                    self.payload_queue.put(payload)
+                    self.packet_count += 1
+                    if self.packet_count % 20 == 0:
+                        self.logger.info("Valid packet count = {0} attempted decodes = {1}"
+                                         .format(self.packet_count, self.attempted_decodes))
+            else:
+                for b in it:
+                    buffer.append(b)
 
-        if payload is not None:
-            self.payload_queue.put(payload)
+
 

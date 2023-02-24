@@ -30,11 +30,11 @@ class APIMessageWriter(Thread):
         self.polling_interval = config.getint('API', 'report_interval')
 
         self.api_config = APIConfig()
-        self.api_auth = APIAuth(config)
+        self.api_auth = APIAuth(self.api_config)
         self.api_writer = SensorDataIngest(self.api_auth)
 
         # a hashmap of sensor messages we want to send to the API
-        self.to_send = dict([int, SensorMessageItem])
+        self.to_send: dict([int, SensorMessageItem]) = dict()
 
         self.is_sending = False
 
@@ -69,12 +69,11 @@ class APIMessageWriter(Thread):
 
             now_ = AretasUtils.now_ms()
             if (now_ - self.last_message_time) >= self.polling_interval:
-                self.logger.info("Sending messages to API")
+                self.logger.info("Sending {} messages to API".format(len(self.to_send)))
                 self.last_message_time = now_
                 # use the apiwriter
                 self.is_sending = True
-
-                for message in self.to_send:
+                for key, message in self.to_send.items():
                     # if it hasn't been previously sent, then send it
                     if not message.get_is_sent():
                         datum: dict = {

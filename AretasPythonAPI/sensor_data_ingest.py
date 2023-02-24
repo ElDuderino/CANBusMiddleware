@@ -16,6 +16,7 @@ class SensorDataIngest:
         - extended types (PCM, thermal, etc.)
         - extended types batch
     """
+
     def __init__(self, api_auth: APIAuth):
         self.api_auth = api_auth
         self.logger = logging.getLogger(__name__)
@@ -44,7 +45,15 @@ class SensorDataIngest:
         req = PreparedRequest()
         req.prepare_url(url, params)
 
-        headers = {"Authorization": "Bearer " + self.api_auth.get_token(), "X-AIR-Token": str(mac)}
+        auth_token = self.api_auth.get_token()
+        if auth_token is None:
+            """
+            This isn't ideal, but we'll let it slide for now until we decide what to do when a user has provided
+            invalid access credentials or the API is malfunctioning
+            """
+            auth_token = ""
+
+        headers = {"Authorization": "Bearer " + auth_token, "X-AIR-Token": str(mac)}
 
         response = requests.get(req.url, headers=headers)
 
@@ -54,7 +63,8 @@ class SensorDataIngest:
             self.logger.info("API Response:{0}".format(json_response))
             return True
 
-        elif response.status_code == 401 or 403 and n_retries > 0:
+        elif (response.status_code == 401 or response.status_code == 403) and (n_retries > 0):
+            self.logger.info("Response [{}], refreshing authtoken".format(response.status_code))
             n_retries = n_retries - 1
             self.api_auth.refresh_token()
             return self.send_datum_auth_check(datum, overwritetimestamp, n_retries)

@@ -1,4 +1,5 @@
 import configparser
+import logging
 from multiprocessing import Event
 from threading import Thread
 from AretasPythonAPI.utils import Utils as AretasUtils
@@ -41,18 +42,14 @@ class PacketMocker:
         We should extend each of these functions to include realistic simulated data
         """
         packet_type = self.supported_packets[self.packet_index]
+        payload = None
 
-        if packet_type == EVBatterySensorTypes.EV_BAT_HV.value:
-
-            data = 0.00
-            payload = self.create_uart_packet(self.mac, packet_type, data)
-
-        elif packet_type == EVBatterySensorTypes.EV_BAT_HX.value:
+        if packet_type == EVBatterySensorTypes.EV_BAT_HX.value:
 
             data = 0.00
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
-        elif packet_type == EVBatterySensorTypes.EV_BAT_AHr.value:
+        elif packet_type == EVBatterySensorTypes.EV_BAT_AHR.value:
 
             data = 0.00
             payload = self.create_uart_packet(self.mac, packet_type, data)
@@ -105,6 +102,7 @@ class SerialPortMocker(Thread):
         # read in the global app config
         config = configparser.ConfigParser()
         config.read('config.cfg')
+        self.logger = logging.getLogger(__name__)
 
         self.packet_mocker = PacketMocker()
 
@@ -133,17 +131,24 @@ class SerialPortMocker(Thread):
             if now - self.last_run_time > self.packet_mocker_interval_ms:  # run every n milliseconds
                 # write a packet to the port
                 self.last_run_time = now
-                print("Writing mock packet {}".format(self.n_packets))
                 self.write_packet()
-                self.n_packets += 1
-                pass
 
             if self.sig_event.is_set():
-                print("Exiting {}".format(self.__class__.__name__))
+                self.logger.info("Exiting {}".format(self.__class__.__name__))
                 break
             pass
 
     def write_packet(self):
+        """
+        We write the next packet to the UART
+        Keep in mind that depending on the switch statements in the mocker, we may not get a
+        valid packet for every iteration (since we don't have 100% coverage of the enum in the switch statements)
+        """
         packet = self.packet_mocker.get_next_packet()
-        self.ser.write(packet)
+        if packet is None:
+            return
+        self.logger.info("Writing mock packet {}".format(self.n_packets))
+        self.logger.info("Packet: {}".format(packet))
+        self.n_packets += 1
+        self.ser.write(str.encode(packet))
 

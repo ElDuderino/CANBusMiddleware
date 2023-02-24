@@ -18,9 +18,6 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('config.cfg')
 
-    # determine if we are reading byte by byte or not (prefer not)
-    rbbb_ = config.getboolean('SERIAL', 'serial_byte_by_byte')
-
     # this is a shared event handler among all the threads
     thread_sig_event = Event()
 
