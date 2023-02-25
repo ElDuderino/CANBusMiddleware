@@ -1,0 +1,54 @@
+{
+  "docType": "SensorType",
+  "charCode":"EV_BAT_SOH",
+  "charting":true,
+  "display":true,
+  "enabled":true,
+  "gasStatsSupported":false,
+  "label":"HV Bat SoH",
+  "description": "State of Health is another indication of the battery’s ability to hold and release energy and is reported as a percentage. When the battery is new SOH=100%",
+  "rangeHint":{"_max":100.0,"_min":0.0,"_step":1.0},
+  "rank":100.0,
+  "sensorColor":"0x658785",
+  "sensorGasFormula":"",
+  "sensorTypeIntelligence":{
+    "binsInfo":[{
+        "max":55.0,
+        "min":0.0,
+        "recommendation":"It is likely this battery is approaching EOL (end of life)",
+        "strokeStyle":"#8b0000"
+      },{
+        "max":65.0,
+        "min":55.0,
+        "recommendation":"We don't have much information on this SOH, but the 5th percentile of batteries manufactured in 2011 report this low SOH %",
+        "strokeStyle":"red"
+      },{
+        "max":78.0,
+        "min":65.0,
+        "recommendation":"This SOH % is equivalent to the SOH of the >= 50th percentile of Nissan Leaf Batteries between manufactured between 2011 and 2014 (as measured in 2022)",
+        "strokeStyle":"orange"
+      },{
+        "max":88.0,
+        "min":78.0,
+        "recommendation":"This SOH % is equivalent to the SOH of the >= 50th percentile of Nissan Leaf Batteries between manufactured between 2014 and 2017 (as measured in 2022)",
+        "strokeStyle":"yellow"
+      },{
+        "max":92.0,
+        "min":88.0,
+        "recommendation":"This SOH % is equivalent to the SOH of the >= 50th percentile of Nissan Leaf Batteries between manufactured between 2017 and 2019 (as measured in 2022)",
+        "strokeStyle":"green"
+      },{
+        "max":100.0,
+        "min":92.0,
+        "recommendation":"At this SOH % this EV pack appears to be new",
+        "strokeStyle":"blue"
+      }
+    ],
+    "citationUrls":
+    [
+      "https://flipthefleet.org/resources/benchmark-your-leaf-before-buying/"
+    ]
+  },
+  "typeByte":525,
+  "units":"%"
+}

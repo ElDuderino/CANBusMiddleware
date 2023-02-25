@@ -1,4 +1,4 @@
-[{
+{
   "charCode":"CO2",
   "charting":true,
   "display":true,
@@ -37,9 +37,6 @@
       "https://www.canada.ca/en/health-canada/programs/consultation-residential-indoor-air-quality-guidelines-carbon-dioxide/document.html#a6.2"
     ]
   },
-  "type":181,
+  "typeByte":181,
   "units":"ppm"
-},{
-
 }
-]

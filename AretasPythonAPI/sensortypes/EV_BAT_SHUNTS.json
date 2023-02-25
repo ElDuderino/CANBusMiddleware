@@ -1,0 +1,29 @@
+{
+  "docType": "SensorType",
+  "charCode":"EV_BAT_SHUNTS",
+  "charting":true,
+  "display":true,
+  "enabled":true,
+  "gasStatsSupported":false,
+  "label":"Shunt status",
+  "description": "Individual cell shunt status",
+  "rangeHint":{"_max":1.0,"_min":0.0,"_step":0.1},
+  "rank":100.0,
+  "sensorColor":"0x08e9dd",
+  "sensorGasFormula":"",
+  "sensorTypeIntelligence":{
+    "binsInfo":[{
+        "max":0.5,
+        "min":0.0,
+        "strokeStyle":"blue"
+      },{
+        "max":1.0,
+        "min":0.5,
+        "recommendation":"",
+        "strokeStyle":"green"
+      }
+    ]
+  },
+  "typeByte":524,
+  "units":"On/Off"
+}

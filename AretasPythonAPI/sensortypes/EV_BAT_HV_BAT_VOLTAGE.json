@@ -1,0 +1,44 @@
+{
+  "docType": "SensorType",
+  "charCode":"EV_BAT_HV_BAT_VOLTAGE",
+  "charting":true,
+  "display":true,
+  "enabled":true,
+  "gasStatsSupported":false,
+  "label":"HV Bat Voltage",
+  "description": "Leaf pack High Voltage Battery Voltage. Typically, 96 cell groups that should each be charged to an absolute maximum of approx 4.135V (or less depending on the generation)",
+  "rangeHint":{"_max":415.0,"_min":0,"_step":1},
+  "rank":100.0,
+  "sensorColor":"0x2e8a85",
+  "sensorGasFormula":"",
+  "sensorTypeIntelligence":{
+    "binsInfo":[{
+        "max":316.8,
+        "min":0.0,
+        "strokeStyle":"red"
+      },{
+        "max":393.6,
+        "min":316.8,
+        "recommendation":"",
+        "strokeStyle":"yellow"
+      },{
+        "max":393.6,
+        "min":360.0,
+        "recommendation":"",
+        "strokeStyle":"green"
+      },{
+        "max":398.4,
+        "min":393.6,
+        "recommendation":"",
+        "strokeStyle":"yellow"
+      },{
+        "max":415.0,
+        "min":398.4,
+        "recommendation":"",
+        "strokeStyle":"red"
+      }
+    ]
+  },
+  "typeByte":518,
+  "units":"V"
+}
