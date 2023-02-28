@@ -1,6 +1,9 @@
 import configparser
 from queue import Queue
 from threading import Thread, Event
+
+import urllib3
+
 from AretasPythonAPI.utils import Utils as AretasUtils
 from AretasPythonAPI.api_config import *
 from AretasPythonAPI.auth import *
@@ -67,7 +70,10 @@ class APIMessageWriter(Thread):
                 self.logger.info("Exiting {}".format(self.__class__.__name__))
                 break
 
+            # get the current time in milliseconds
             now_ = AretasUtils.now_ms()
+
+            # determine if the polling interval has elapsed
             if (now_ - self.last_message_time) >= self.polling_interval:
                 self.logger.info("Sending {} messages to API".format(len(self.to_send)))
                 self.last_message_time = now_
@@ -82,13 +88,28 @@ class APIMessageWriter(Thread):
                             'timestamp': message.get_timestamp(),
                             'data': message.get_data()
                         }
-                        # we're using the token self-management function
-                        err = self.api_writer.send_datum_auth_check(datum)
-                        if err is False:
-                            self.logger.error("Error sending messages, aborting rest")
+                        try:
+                            # we're using the token self-management function
+                            err = self.api_writer.send_datum_auth_check(datum)
+                            if err is False:
+                                self.logger.error("Error sending messages, aborting rest")
+                                break
+                            else:
+                                message.set_is_sent(True)
+
+                        except urllib3.exceptions.ReadTimeoutError as rte:
+                            self.logger.error("Read timeout error from urllib3:{}".format(rte))
+                            # we break because there's no point in trying to send the rest of the messages,
+                            # we can wait until next interval
                             break
-                        else:
-                            message.set_is_sent(True)
+                        except requests.exceptions.ReadTimeout as rt:
+                            self.logger.error("Read timeout error from requests:{}".format(rt))
+                            pass
+                        # we need to be fairly aggressive with exception handling as we are in a thread
+                        # doing network stuff and network things are buggy as heck
+                        except Exception as e:
+                            self.logger.error("Unknown exception trying to send messages to API:{}".format(rt))
+                            pass
 
                 self.is_sending = False
                 pass

@@ -6,7 +6,12 @@ from message_harvester import MessageHarvester
 from packet_mocker import SerialPortMocker
 from serial_port_read_writer import SerialPortReadWriter
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# An example of using logging.basicConfig rather than logging.fileHandler()
+logging.basicConfig(filename="CANBusMiddleware.log",
+                    filemode="a",
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":

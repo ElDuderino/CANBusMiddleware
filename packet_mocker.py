@@ -46,37 +46,52 @@ class PacketMocker:
 
         if packet_type == EVBatterySensorTypes.EV_BAT_HX.value:
 
-            data = 0.00
+            data = 98.0
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_AHR.value:
 
-            data = 0.00
+            data = 97
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_HV_BAT_CURRENT_1.value:
 
-            data = 0.00
+            data = 10.0
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_HV_BAT_VOLTAGE.value:
 
-            data = 0.00
+            data = 390.0
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_SOH.value:
 
-            data = 0.00
+            data = 89.34
+            payload = self.create_uart_packet(self.mac, packet_type, data)
+
+        elif packet_type == EVBatterySensorTypes.EV_BAT_SOC.value:
+
+            data = 95.0
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_1.value:
 
-            data = 0.00
+            data = 23.2
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_2.value:
 
-            data = 0.00
+            data = 22.1
+            payload = self.create_uart_packet(self.mac, packet_type, data)
+
+        elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_3.value:
+
+            data = 30.0
+            payload = self.create_uart_packet(self.mac, packet_type, data)
+
+        elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_4.value:
+
+            data = 22.0
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         self.increment_type()
