@@ -5,8 +5,52 @@ from threading import Thread
 from AretasPythonAPI.utils import Utils as AretasUtils
 import serial
 from time import time
-
+import random
+import math
 from ev_battery_sensor_types import EVBatterySensorTypes
+
+
+class TempMocker:
+    """
+    For the temperature mocking, we just use a sin function
+    scaled to work with the ordinal hour value (since epoch)
+
+    something like:
+
+    2sin(0.04x+a)+b + noise
+
+    where a is a random integer between 0-10 to shift the output left/right
+    so that multiple channels don't overlap and
+
+    b is the "center" temperature
+
+    rng is just the span above / below the center
+
+    You'll want to spin up one mocker per channel so they have different outputs
+    """
+
+    def __init__(self, rng: float = 2.0):
+
+        self.a = random.randint(1, 10) * 1.0
+        self.b = 25.0
+        self.rng = rng
+
+    def get_y(self, x) -> float:
+        noise = random.gauss() / 10.0
+        y = self.rng * math.sin(0.04 * x + self.a) + self.b + noise
+        return y
+
+    def get_temp_hr(self):
+        """
+        Use this method to get a simulated temp for the current time
+        """
+        now = AretasUtils.now_ms()
+
+        one_hour_ms = 60 * 60 * 1000
+        # the current ordinal hour value since epoch
+        current_hour_f = float(now) / float(one_hour_ms)
+
+        return self.get_y(current_hour_f)
 
 
 class PacketMocker:
@@ -26,6 +70,11 @@ class PacketMocker:
 
         # determine if we are reading byte by byte or not (prefer not)
         self.mac = config.getint('DEFAULT', 'self_mac')
+
+        self.temp_mocker1 = TempMocker()
+        self.temp_mocker2 = TempMocker()
+        self.temp_mocker3 = TempMocker()
+        self.temp_mocker4 = TempMocker()
 
     @staticmethod
     def create_uart_packet(mac: int, payload_type: int, data: float) -> dict:
@@ -76,22 +125,22 @@ class PacketMocker:
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_1.value:
 
-            data = 23.2
+            data = self.temp_mocker1.get_temp_hr()
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_2.value:
 
-            data = 22.1
+            data = self.temp_mocker2.get_temp_hr()
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_3.value:
 
-            data = 30.0
+            data = self.temp_mocker3.get_temp_hr()
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         elif packet_type == EVBatterySensorTypes.EV_BAT_TEMP_4.value:
 
-            data = 22.0
+            data = self.temp_mocker4.get_temp_hr()
             payload = self.create_uart_packet(self.mac, packet_type, data)
 
         self.increment_type()

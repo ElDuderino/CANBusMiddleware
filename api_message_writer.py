@@ -105,10 +105,12 @@ class APIMessageWriter(Thread):
                         except requests.exceptions.ReadTimeout as rt:
                             self.logger.error("Read timeout error from requests:{}".format(rt))
                             pass
+                        except requests.exceptions.ConnectTimeout as cte:
+                            self.logger.error("Connection timeout error sending messages to API:{}".format(cte))
                         # we need to be fairly aggressive with exception handling as we are in a thread
                         # doing network stuff and network things are buggy as heck
                         except Exception as e:
-                            self.logger.error("Unknown exception trying to send messages to API:{}".format(rt))
+                            self.logger.error("Unknown exception trying to send messages to API:{}".format(e))
                             pass
 
                 self.is_sending = False
