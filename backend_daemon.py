@@ -2,15 +2,17 @@ from threading import Event
 from queue import Queue
 import configparser
 import logging
+from logging.handlers import RotatingFileHandler
 from message_harvester import MessageHarvester
 from packet_mocker import SerialPortMocker
 from serial_port_read_writer import SerialPortReadWriter
 
 # An example of using logging.basicConfig rather than logging.fileHandler()
-logging.basicConfig(filename="CANBusMiddleware.log",
-                    filemode="a",
-                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO,
+                    handlers=[
+                        RotatingFileHandler("CANBusMiddleware.log", maxBytes=50000000, backupCount=5)
+                    ],
+                    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 logger = logging.getLogger(__name__)
 

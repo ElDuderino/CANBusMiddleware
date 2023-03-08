@@ -1,6 +1,7 @@
 import logging
 
 import requests
+import requests.utils as r_utils
 from .api_config import APIConfig
 
 
@@ -31,6 +32,7 @@ class APIAuth:
             self.api_config.get_api_username(),
             self.api_config.get_api_password()
         )
+        uri = r_utils.requote_uri(uri)
         api_response = requests.get(uri)
 
         if api_response.status_code == 401 or api_response.status_code == 403:
