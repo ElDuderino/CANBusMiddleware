@@ -2,7 +2,12 @@
 
 Currently, this middleware connects an EV battery CAN Bus decoder to the Aretas cloud platform
 
-However, we intend to support other CAN bus sensor data to enable extensive EV, HEV and ICE telematics. 
+You can use our CANBUS board or the longan board. Load up Matt's firmware found here:
+https://github.com/ElDuderino/nissan-leaf-can-bms/
+
+And connect this middleware via USB (or BLE serial). 
+
+We intend to support other CAN bus sensor data to enable extensive EV, HEV and ICE telematics. 
 
 The connections:
 
@@ -31,6 +36,11 @@ The middleware will get the data in to the cloud and give us access to all the c
 - Condition reports 
 
 ## Running ##
+Edit config.cfg to make sure you:
+- disable packet mocking
+- have valid credentials for the Aretas API
+- enter in the correct COM port for the serial connection
+-
 Will include more info here eventually, but to run it now, just run ``python3 backend_daemon.py``
 
 ## Notes ##
