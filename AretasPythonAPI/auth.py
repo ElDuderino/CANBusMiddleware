@@ -2,7 +2,7 @@ import logging
 
 import requests
 import requests.utils as r_utils
-from .api_config import APIConfig
+from api_config import APIConfig
 
 
 class APIAuth:
@@ -16,6 +16,8 @@ class APIAuth:
 
     def test_token(self):
         """test if the token is valid"""
+        if self.API_TOKEN is None:
+            return False
         api_response = requests.get(self.api_config.get_api_url() + "greetings/isloggedin",
                                     headers={"Authorization": "Bearer " + self.API_TOKEN})
 
