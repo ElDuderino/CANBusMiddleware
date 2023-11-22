@@ -8,12 +8,29 @@ import serial
 from aretas_packet import AretasPacket
 
 
+class BasicSerialParams:
+    def __init__(self, port="/dev/ttyUSB0", baud_rate=115200, mac=None):
+        self._port = port
+        self._baud_rate = baud_rate
+        self._self_mac = mac
+
+    def get_baud_rate(self) -> int:
+        return self._baud_rate
+
+    def get_port(self) -> str:
+        return self._port
+
+    def get_mac(self)-> int or None:
+        return self._self_mac
+
+
 class SerialPortReadWriter(Thread):
     """
     This thread monitors the serial port specified in the cfg
     and injects bytes and/or payloads into the semaphore queue
     """
-    def __init__(self, payload_queue: Queue, sig_event: Event):
+
+    def __init__(self, payload_queue: Queue, sig_event: Event, serial_params: BasicSerialParams):
         super(SerialPortReadWriter, self).__init__()
         self.logger = logging.getLogger(__name__)
 
@@ -22,15 +39,12 @@ class SerialPortReadWriter(Thread):
         config = configparser.ConfigParser()
         config.read('config.cfg')
 
-        self.serial_port = config['SERIAL']['serial_port']
-        self.baud_rate = config['SERIAL']['baud_rate']
-
         self.payload_queue = payload_queue
 
         # enumerate and open the port
         self.ser = serial.Serial()
-        self.ser.port = self.serial_port
-        self.ser.baudrate = self.baud_rate
+        self.ser.port = serial_params.get_port()
+        self.ser.baudrate = serial_params.get_baud_rate()
         self.ser.parity = serial.PARITY_NONE
         self.ser.bytesize = serial.EIGHTBITS
         self.ser.stopbits = 1
@@ -40,6 +54,8 @@ class SerialPortReadWriter(Thread):
 
         self.attempted_decodes = 0
         self.packet_count = 0
+
+        self.self_mac = serial_params.get_mac()
 
     def run(self):
         # enqueue bytes into the self.message_queue
@@ -87,17 +103,14 @@ class SerialPortReadWriter(Thread):
                 self.attempted_decodes += 1
                 packet = bytes(buffer)
                 buffer.clear()
-                payload = AretasPacket.parse_packet(packet)
+                payload = AretasPacket.parse_packet(packet, self.self_mac)
 
                 if payload is not None:
                     self.payload_queue.put(payload)
                     self.packet_count += 1
-                    if self.packet_count % 20 == 0:
+                    if self.packet_count % 120 == 0:
                         self.logger.info("Valid packet count = {0} attempted decodes = {1}"
                                          .format(self.packet_count, self.attempted_decodes))
             else:
                 for b in it:
                     buffer.append(b)
-
-
-

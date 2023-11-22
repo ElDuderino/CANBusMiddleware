@@ -25,8 +25,8 @@ class EVBatterySensorTypes(Enum):
     EV_BAT_HV_BAT_VOLTAGE = 0x206
 
     # cells voltage - this is the voltages (in mV) from the N cell pairs (96 in the leaf for example)
-    # we will not support this directly right now, but will in the future as an extended type
-    EV_BAT_CELL_VOLTAGES = 0x207
+    # we will not support this directly right now, but will, in the future, as an extended type
+    EV_BAT_CELL_VOLTAGES = 0x258
 
     # packs temperatures (degrees C)
     EV_BAT_TEMP_1 = 0x208

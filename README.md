@@ -1,11 +1,12 @@
 # CAN Bus Middleware #
 
-Currently, this middleware connects an EV battery CAN Bus decoder to the Aretas cloud platform
+Currently, this middleware connects multiple EV battery CAN Bus decoders to the Aretas cloud platform
 
-You can use our CANBUS board or the longan board. Load up Matt's firmware found here:
-https://github.com/ElDuderino/nissan-leaf-can-bms/
-
-And connect this middleware via USB (or BLE serial). 
+The current LEAF Decoder firmware can be found here. It's targeted to the Longan RP2040 board but should work with minor 
+modifications on any Arduino CANBUS board:
+https://github.com/ElDuderino/CANBedFirmware 
+If you want to use an Aretas or other CANBUS board other than Longan RP2040 based board, you will likely need 
+to change libraries and adjust the firmware slightly.
 
 We intend to support other CAN bus sensor data to enable extensive EV, HEV and ICE telematics. 
 
@@ -39,11 +40,25 @@ The middleware will get the data in to the cloud and give us access to all the c
 Edit config.cfg to make sure you:
 - disable packet mocking
 - have valid credentials for the Aretas API
-- enter in the correct COM port for the serial connection
--
+- enter the correct COM port(s) for the serial connection
+- Ensure you have entered at least one valid port,mac combo
+- PLEASE leave the ignore_types intact for now and DO NOT send cell voltages to the cloud. We plan to support this
+as an ext type in the future, but for now it will seriously break your user experience in the analytics platform if you send them.
+- The 96 cell voltages ARE sent to REDIS for use with the BanBangController or other things. 
+
 Will include more info here eventually, but to run it now, just run ``python3 backend_daemon.py``
 
 ## Notes ##
+
+### Redis ###
+You can support an optional REDIS connection. The current functionality is very, very basic. We call HSET with the MAC,TYPE
+and insert one SensorDatum. New SensorDatums overwrite the old ones. Extend it if you want. 
+For BESS systems, the REDIS message format works with: 
+https://github.com/ElDuderino/BangBangController
+This enables threshold control for the various parameters that come out of the battery. 
+
+To enable Relay control, you need a Waveshare Pico Relay B
+You must load this firmware on to the Pico: https://github.com/ElDuderino/RP2040SerialGPIOControl
 
 ### Sensortype Metadata ###
 I need to decide on the actual integer (uint_16) types for the new sensor types to avoid collisions with existing types in the Aretas API.
@@ -53,7 +68,7 @@ I'll  create a reserved block for telematics types and start sketching them out 
 
 ### K.I.S.S. Data Format ##
 The Aretas payload format over UART is:
-- mac - 32-bit integer (unique device identifier)
+- mac - 48-bit integer (unique device identifier)
 - type - 16-bit integer (sensor type)
 - data - float (the payload data)
 
@@ -82,8 +97,8 @@ This is to prevent spamming the API excessively with too much data
 
 Eventually we can submit cache only data which will persist in the cache, but not require a database write for every packet.
 
-Also, be aware, all the types are being sent to the API serially and synchronously right now. 
-As such, if the API send takes 10ms, sending 10 sensor types takes 10*10ms = 100ms
+~~Also, be aware, all the types are being sent to the API serially and synchronously right now. 
+As such, if the API send takes 10ms, sending 10 sensor types takes 10*10ms = 100ms~~ Messages are sent in batch mode now.
 
 Batch mode is supported in the API but not in the SDK yet, so that is coming soon.
 

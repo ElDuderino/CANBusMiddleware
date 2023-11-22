@@ -34,6 +34,10 @@ class APIMessageWriter(Thread):
         self.last_message_time = 0
         self.polling_interval = config.getint('API', 'report_interval')
 
+        self.ignore_types = APIMessageWriter.parse_ignore_types(config.get('API', 'ignore_types', fallback=""))
+
+        self.logger.info("Ignore types:{}".format(self.ignore_types))
+
         self.api_config = APIConfig()
         self.api_auth = APIAuth(self.api_config)
         self.api_writer = SensorDataIngest(self.api_auth)
@@ -41,12 +45,14 @@ class APIMessageWriter(Thread):
         # a hashmap of sensor messages we want to send to the API
         self.to_send: dict([int, SensorMessageItem]) = dict()
 
-        self.self_mac = config.getint('DEFAULT', 'self_mac')
-
         self.thread_sleep = config.getboolean('DEFAULT', 'thread_sleep')
         self.thread_sleep_time = config.getfloat('DEFAULT', 'thread_sleep_time')
 
         self.is_sending = False
+
+    @staticmethod
+    def parse_ignore_types(ignore_types_str: str) -> list[int]:
+        return [int(i) for i in ignore_types_str.split(',')]
 
     def enqueue_msg(self, message: SensorMessageItem):
         """
@@ -61,10 +67,12 @@ class APIMessageWriter(Thread):
         # don't accept new messages if we're in the process of sending
         # it's unlikely this will ever happen but...
         if self.is_sending is False:
-            dict_key = message.get_type()
-            # we're going to assert that it has not been sent
-            message.set_is_sent(False)
-            self.to_send[dict_key] = message
+            # reject filtered message types
+            if int(message.get_type()) not in self.ignore_types:
+                dict_key = message.get_type()
+                # we're going to assert that it has not been sent
+                message.set_is_sent(False)
+                self.to_send[dict_key] = message
         return
 
     def run(self):
@@ -100,8 +108,6 @@ class APIMessageWriter(Thread):
                             'timestamp': message.get_timestamp(),
                             'data': message.get_data()
                         }
-                        if self.self_mac is not None:
-                            datum['mac'] = self.self_mac
 
                         to_send_items.append(datum)
 

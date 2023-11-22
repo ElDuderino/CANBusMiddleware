@@ -5,7 +5,7 @@ import logging
 class AretasPacket:
 
     @staticmethod
-    def parse_packet(buffer: bytes) -> dict or None:
+    def parse_packet(buffer: bytes, default_mac:int = None) -> dict or None:
         """
         Parse a bytestring we read in off the UART and
         turn it into a standard packet like Aretas uses for everything
@@ -25,6 +25,9 @@ class AretasPacket:
             mac_ = int(str_tok[0])
             type_ = int(str_tok[1])
             data_ = float(str_tok[2])
+
+            if default_mac is not None:
+                mac_ = default_mac
 
             return {
                 'mac': mac_,
