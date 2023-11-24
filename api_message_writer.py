@@ -90,7 +90,7 @@ class APIMessageWriter(Thread):
 
             # determine if the polling interval has elapsed
             if (now_ - self.last_message_time) >= self.polling_interval:
-                
+
                 n_send = len(list(filter(lambda x: x.get_is_sent() is False, self.to_send.values())))
                 self.logger.info("Sending {} messages to API".format(n_send))
                 self.last_message_time = now_

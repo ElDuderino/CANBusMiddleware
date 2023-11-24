@@ -3,7 +3,7 @@ import logging
 from multiprocessing import Event
 from queue import Queue
 from threading import Thread
-from time import time
+import time
 import serial
 from aretas_packet import AretasPacket
 
