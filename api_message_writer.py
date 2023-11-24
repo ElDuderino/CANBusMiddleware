@@ -43,7 +43,7 @@ class APIMessageWriter(Thread):
         self.api_writer = SensorDataIngest(self.api_auth)
 
         # a hashmap of sensor messages we want to send to the API
-        self.to_send: dict([int, SensorMessageItem]) = dict()
+        self.to_send: dict([str, SensorMessageItem]) = dict()
 
         self.thread_sleep = config.getboolean('DEFAULT', 'thread_sleep')
         self.thread_sleep_time = config.getfloat('DEFAULT', 'thread_sleep_time')
@@ -69,9 +69,11 @@ class APIMessageWriter(Thread):
         if self.is_sending is False:
             # reject filtered message types
             if int(message.get_type()) not in self.ignore_types:
-                dict_key = message.get_type()
+                dict_key = "{0},{1}".format(message.get_mac(), message.get_type())
+
                 # we're going to assert that it has not been sent
                 message.set_is_sent(False)
+
                 self.to_send[dict_key] = message
         return
 
@@ -86,14 +88,15 @@ class APIMessageWriter(Thread):
                 break
 
             # get the current time in milliseconds
-            now_ = AretasUtils.now_ms()
+            now = AretasUtils.now_ms()
 
             # determine if the polling interval has elapsed
-            if (now_ - self.last_message_time) >= self.polling_interval:
+            if (now - self.last_message_time) >= self.polling_interval:
 
                 n_send = len(list(filter(lambda x: x.get_is_sent() is False, self.to_send.values())))
                 self.logger.info("Sending {} messages to API".format(n_send))
-                self.last_message_time = now_
+
+                self.last_message_time = now
                 # use the apiwriter
                 self.is_sending = True
 
