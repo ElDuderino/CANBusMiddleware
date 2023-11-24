@@ -39,6 +39,9 @@ class SerialPortReadWriter(Thread):
         config = configparser.ConfigParser()
         config.read('config.cfg')
 
+        self.thread_sleep = config.getboolean('DEFAULT', 'thread_sleep')
+        self.thread_sleep_time = config.getfloat('DEFAULT', 'thread_sleep_time')
+
         self.payload_queue = payload_queue
 
         # enumerate and open the port
@@ -60,13 +63,18 @@ class SerialPortReadWriter(Thread):
     def run(self):
         # enqueue bytes into the self.message_queue
         while True:
+            if self.sig_event.is_set():
+                self.logger.info("Exiting {}".format(self.__class__.__name__))
+                break
+
             if not self.pause_reading:
 
                 self.read_port()
+                # sleep after for a while
 
-                if self.sig_event.is_set():
-                    self.logger.info("Exiting {}".format(self.__class__.__name__))
-                    break
+                if self.thread_sleep is True:
+                    time.sleep(self.thread_sleep_time)
+
             else:
 
                 time.sleep(0.01)  # sleep for 10ms and allow UART to "settle"
