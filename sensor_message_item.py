@@ -2,12 +2,17 @@ class SensorMessageItem:
     """
     A contract for the sensor message item type
     """
-    def __init__(self, mac: int = -1, sensor_type: int = -1, payload_data: float = -1.0, timestamp: int = -1, sent: bool = False):
+    def __init__(self, mac: int = -1,
+                 sensor_type: int = -1,
+                 payload_data: float = -1.0,
+                 timestamp: int = -1,
+                 sent: bool = False):
+
         self._type = sensor_type
         self._mac = mac
+        self._data = payload_data
         self._timestamp = timestamp
         self._sent = sent
-        self._data = payload_data
         pass
 
     def get_type(self) -> int:

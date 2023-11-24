@@ -43,7 +43,7 @@ class APIMessageWriter(Thread):
         self.api_writer = SensorDataIngest(self.api_auth)
 
         # a hashmap of sensor messages we want to send to the API
-        self.to_send: dict([str, SensorMessageItem]) = dict()
+        self.to_send: dict[str, SensorMessageItem] = dict()
 
         self.thread_sleep = config.getboolean('DEFAULT', 'thread_sleep')
         self.thread_sleep_time = config.getfloat('DEFAULT', 'thread_sleep_time')

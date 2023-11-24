@@ -59,7 +59,8 @@ class MessageHarvester(Thread):
                 sensor_message_item = SensorMessageItem(mac=payload['mac'],
                                                         sensor_type=payload['type'],
                                                         timestamp=payload['timestamp'],
-                                                        payload_data=payload['data'])
+                                                        payload_data=payload['data'],
+                                                        sent=False)
 
                 mac_stats_dict = self.stats_dict.get(sensor_message_item.get_mac(), None)
                 if mac_stats_dict is None:
