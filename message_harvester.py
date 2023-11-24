@@ -14,6 +14,7 @@ class MessageHarvester(Thread):
     """
     The thread to manage the consumption of the payload queue from the serial port reader
     """
+
     def __init__(self, payload_queue: Queue, sig_event: Event):
         super(MessageHarvester, self).__init__()
 
@@ -34,6 +35,8 @@ class MessageHarvester(Thread):
         self.api_sender.start()
 
         self.enable_redis = config.getboolean('REDIS', 'redis_enable', fallback=False)
+
+        self.stats_dict = dict()
 
         self.redis_processor = None
 
@@ -57,6 +60,17 @@ class MessageHarvester(Thread):
                                                         sensor_type=payload['type'],
                                                         timestamp=payload['timestamp'],
                                                         payload_data=payload['data'])
+
+                mac_stats_dict = self.stats_dict.get(sensor_message_item.get_mac(), None)
+                if mac_stats_dict is None:
+                    self.stats_dict[sensor_message_item.get_mac()] = {"total_count": 0}
+                    total_count = 0
+                else:
+                    mac_stats_dict["total_count"] += 1
+                    total_count = mac_stats_dict["total_count"]
+
+                if (total_count % 200) == 0:
+                    self.logger.info("Total messages processed:{}".format(total_count))
 
                 if self.enable_redis is True:
                     self.redis_processor.inject_message(sensor_message_item)

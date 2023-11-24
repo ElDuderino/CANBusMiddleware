@@ -25,8 +25,7 @@ def parse_serial_params(serial_params_str: str, baud_rate: int) -> list[BasicSer
         param_pair = param_pair_str.split(',')
         str_port = param_pair[0]
         mac = int(param_pair[1])
-
-    ret.append(BasicSerialParams(str_port, baud_rate, mac))
+        ret.append(BasicSerialParams(str_port, baud_rate, mac))
 
     return ret
 

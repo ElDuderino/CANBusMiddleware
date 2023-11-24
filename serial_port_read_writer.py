@@ -44,6 +44,8 @@ class SerialPortReadWriter(Thread):
 
         self.payload_queue = payload_queue
 
+        self.com_id = serial_params.get_port()
+
         # enumerate and open the port
         self.ser = serial.Serial()
         self.ser.port = serial_params.get_port()
@@ -64,7 +66,7 @@ class SerialPortReadWriter(Thread):
         # enqueue bytes into the self.message_queue
         while True:
             if self.sig_event.is_set():
-                self.logger.info("Exiting {}".format(self.__class__.__name__))
+                self.logger.info("{0} Exiting {1}".format(self.com_id, self.__class__.__name__))
                 break
 
             if not self.pause_reading:
@@ -116,9 +118,9 @@ class SerialPortReadWriter(Thread):
                 if payload is not None:
                     self.payload_queue.put(payload)
                     self.packet_count += 1
-                    if self.packet_count % 120 == 0:
-                        self.logger.info("Valid packet count = {0} attempted decodes = {1}"
-                                         .format(self.packet_count, self.attempted_decodes))
+                    if self.packet_count % 200 == 0:
+                        self.logger.info("{0}: Valid packet count = {1} attempted decodes = {2}"
+                                         .format(self.com_id, self.packet_count, self.attempted_decodes))
             else:
                 for b in it:
                     buffer.append(b)
