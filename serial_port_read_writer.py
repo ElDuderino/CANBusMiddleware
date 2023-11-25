@@ -1,7 +1,6 @@
 import configparser
 import logging
-from multiprocessing import Event
-from queue import Queue
+from multiprocessing import Queue, Event
 from threading import Thread
 import time
 import serial
@@ -31,6 +30,7 @@ class SerialPortReadWriter(Thread):
     """
 
     def __init__(self, payload_queue: Queue, sig_event: Event, serial_params: BasicSerialParams):
+
         super(SerialPortReadWriter, self).__init__()
         self.logger = logging.getLogger(__name__)
 
@@ -61,6 +61,8 @@ class SerialPortReadWriter(Thread):
         self.packet_count = 0
 
         self.self_mac = serial_params.get_mac()
+
+        self.latest_data: dict[int, dict] = dict()
 
     def run(self):
         # enqueue bytes into the self.message_queue
@@ -95,6 +97,22 @@ class SerialPortReadWriter(Thread):
         self.pause_reading = False
         pass
 
+    def flush_packets(self):
+        packets = list()
+        for sensor_type, packet in self.latest_data.items():
+            packets.append(packet)
+
+        self.payload_queue.put(packets)
+
+        self.latest_data.clear()
+
+    def queue_packet(self, packet: dict):
+
+        if int(packet['type']) == 0:
+            self.flush_packets()
+        else:
+            self.latest_data[packet['type']] = packet
+
     def read_port(self):
         """
         In this instance, we're reading the ultra simple Aretas packet format
@@ -116,7 +134,7 @@ class SerialPortReadWriter(Thread):
                 payload = AretasPacket.parse_packet(packet, self.self_mac)
 
                 if payload is not None:
-                    self.payload_queue.put(payload)
+                    self.queue_packet(payload)
                     self.packet_count += 1
                     if self.packet_count % 200 == 0:
                         self.logger.info("{0}: Valid packet count = {1} attempted decodes = {2}"

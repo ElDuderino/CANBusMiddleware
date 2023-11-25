@@ -39,28 +39,30 @@ class RedisQueueReader(Thread):
 
         self.message_count = 0
 
-    def inject_message(self, message: SensorMessageItem):
-        self.message_queue.put_nowait(message)
+    def inject_messages(self, sensor_message_items: list[SensorMessageItem]):
+        self.message_queue.put_nowait(sensor_message_items)
 
-    def process_message(self, message: SensorMessageItem):
-        try:
-            msg_mac = message.get_mac()
-            msg_type = message.get_type()
-            msg_json = jsonpickle.encode(message)
-            self.r.hset(str(msg_mac), str(msg_type), msg_json)
-            self.message_count += 1
+    def process_messages(self, sensor_message_items: list[SensorMessageItem]):
 
-            if ((self.message_count % 100) == 0) or (self.message_count == 1):
-                self.logger.info("Processed {} messages".format(self.message_count))
+        for sensor_message in sensor_message_items:
+            try:
+                msg_mac = sensor_message.get_mac()
+                msg_type = sensor_message.get_type()
+                msg_json = jsonpickle.encode(sensor_message)
+                self.r.hset(str(msg_mac), str(msg_type), msg_json)
+                self.message_count += 1
 
-        except Exception as e:
-            self.logger.error("Error submitting message to Redis:{}".format(e))
+                if ((self.message_count % 200) == 0) or (self.message_count == 1):
+                    self.logger.info("Processed {} messages".format(self.message_count))
+
+            except Exception as e:
+                self.logger.error("Error submitting message to Redis:{}".format(e))
 
     def run(self):
         while True:
             while not self.message_queue.empty():
-                message: SensorMessageItem = self.message_queue.get()
-                self.process_message(message)
+                sensor_message_items: list[SensorMessageItem] = self.message_queue.get()
+                self.process_messages(sensor_message_items)
 
             if self.sig_event.is_set():
                 print("Exiting {}".format(self.__class__.__name__))

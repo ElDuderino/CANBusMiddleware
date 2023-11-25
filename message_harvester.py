@@ -1,8 +1,7 @@
 import configparser
 import logging
 import time
-from multiprocessing import Event
-from queue import Queue, Empty
+from multiprocessing import Queue, Event
 from threading import Thread
 
 from api_message_writer import APIMessageWriter
@@ -55,28 +54,32 @@ class MessageHarvester(Thread):
 
             while not self.payload_queue.empty():
 
-                payload = self.payload_queue.get()
-                sensor_message_item = SensorMessageItem(mac=payload['mac'],
-                                                        sensor_type=payload['type'],
-                                                        timestamp=payload['timestamp'],
-                                                        payload_data=payload['data'],
-                                                        sent=False)
+                payload_list = self.payload_queue.get()
 
-                mac_stats_dict = self.stats_dict.get(sensor_message_item.get_mac(), None)
-                if mac_stats_dict is None:
-                    self.stats_dict[sensor_message_item.get_mac()] = {"total_count": 0}
-                    total_count = 0
-                else:
-                    mac_stats_dict["total_count"] += 1
-                    total_count = mac_stats_dict["total_count"]
+                sensor_message_items = [SensorMessageItem(mac=payload['mac'],
+                                                          sensor_type=payload['type'],
+                                                          timestamp=payload['timestamp'],
+                                                          payload_data=payload['data'],
+                                                          sent=False)
+                                        for payload in payload_list]
 
-                if (total_count % 200) == 0:
-                    self.logger.info("Total messages processed:{}".format(total_count))
+                for sensor_message_item in sensor_message_items:
+
+                    mac_stats_dict = self.stats_dict.get(sensor_message_item.get_mac(), None)
+                    if mac_stats_dict is None:
+                        self.stats_dict[sensor_message_item.get_mac()] = {"total_count": 0}
+                        total_count = 0
+                    else:
+                        mac_stats_dict["total_count"] += 1
+                        total_count = mac_stats_dict["total_count"]
+
+                    if (total_count % 200) == 0:
+                        self.logger.info("Total messages processed:{}".format(total_count))
 
                 if self.enable_redis is True:
-                    self.redis_processor.inject_message(sensor_message_item)
+                    self.redis_processor.inject_messages(sensor_message_items)
 
-                self.api_sender.enqueue_msg(sensor_message_item)
+                self.api_sender.enqueue_msgs(sensor_message_items)
 
             if self.thread_sleep is True:
                 time.sleep(self.thread_sleep_time)

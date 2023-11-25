@@ -1,5 +1,5 @@
 from threading import Event
-from queue import Queue
+from multiprocessing import Queue
 import configparser
 import logging
 from logging.handlers import RotatingFileHandler
@@ -31,6 +31,7 @@ def parse_serial_params(serial_params_str: str, baud_rate: int) -> list[BasicSer
 
 
 def main():
+    logger.info("Starting backend daemon")
     import signal
     import sys
 
@@ -58,6 +59,7 @@ def main():
     mq_payload_queue: Queue = Queue()
 
     serial_port_threads = list()
+    logger.info("Starting serial port configs:{}".format(serial_port_configs))
 
     for serial_config in serial_port_configs:
         logger.info("Serial port monitor {} thread starting:".format(serial_config.get_port()))
@@ -74,12 +76,6 @@ def main():
     message_harvester_thread.start()
     logger.info("Message harvester thread started.")
 
-    if config.getboolean("DEBUG_SERIAL", 'packet_mocker_enable'):
-        logger.info("Starting Serial Port Mocker:")
-        serial_port_mocker = SerialPortMocker(thread_sig_event)
-        serial_port_mocker.start()
-        logger.info("Serial Port Mocker started.")
-
     # Test setting the termination event
     # print("Setting thread_sig_event")
     # thread_sig_event.set()
@@ -88,9 +84,6 @@ def main():
         t.join()
 
     message_harvester_thread.join()
-
-    if config.getboolean("DEBUG_SERIAL", 'packet_mocker_enable'):
-        serial_port_mocker.join()
 
 
 if __name__ == "__main__":

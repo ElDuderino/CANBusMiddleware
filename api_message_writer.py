@@ -54,7 +54,7 @@ class APIMessageWriter(Thread):
     def parse_ignore_types(ignore_types_str: str) -> list[int]:
         return [int(i) for i in ignore_types_str.split(',')]
 
-    def enqueue_msg(self, message: SensorMessageItem):
+    def enqueue_msgs(self, sensor_message_items: list[SensorMessageItem]):
         """
         Enqueue a message to be sent, the message may or may not be sent as it may be overwritten
         by a new value before being sent
@@ -62,19 +62,22 @@ class APIMessageWriter(Thread):
         adds the datum to a key/value store (indexed by sensor type)
         As such the key/value store index for a particular sensor type just gets overwritten by new data
         A flag is set in the dict entry to indicate if it has been sent or not
-        New messages added to the dict always have the is_sent flag set to False
+        New messages added to the dict always have the is_sent flag asserted to False
         """
         # don't accept new messages if we're in the process of sending
         # it's unlikely this will ever happen but...
         if self.is_sending is False:
             # reject filtered message types
-            if int(message.get_type()) not in self.ignore_types:
-                dict_key = "{0},{1}".format(message.get_mac(), message.get_type())
 
-                # we're going to assert that it has not been sent
-                message.set_is_sent(False)
+            for sensor_message_item in sensor_message_items:
 
-                self.to_send[dict_key] = message
+                if int(sensor_message_item.get_type()) not in self.ignore_types:
+                    dict_key = "{0},{1}".format(sensor_message_item.get_mac(), sensor_message_item.get_type())
+
+                    # we're going to assert that it has not been sent
+                    sensor_message_item.set_is_sent(False)
+
+                    self.to_send[dict_key] = sensor_message_item
         return
 
     def run(self):
@@ -105,7 +108,7 @@ class APIMessageWriter(Thread):
 
                 for key, message in self.to_send.items():
                     # if it hasn't been previously sent, then send it
-                    if not message.get_is_sent():
+                    if message.get_is_sent() is False:
                         datum: dict = {
                             'mac': message.get_mac(),
                             'type': message.get_type(),

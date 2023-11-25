@@ -68,13 +68,14 @@ class PacketMocker:
         config = configparser.ConfigParser()
         config.read('config.cfg')
 
-        # determine if we are reading byte by byte or not (prefer not)
-        self.mac = config.getint('DEFAULT', 'self_mac')
+        self.mac = 0
 
         self.temp_mocker1 = TempMocker()
         self.temp_mocker2 = TempMocker()
         self.temp_mocker3 = TempMocker()
         self.temp_mocker4 = TempMocker()
+
+        self.flag_send = False
 
     @staticmethod
     def create_uart_packet(mac: int, payload_type: int, data: float) -> dict:
@@ -149,10 +150,9 @@ class PacketMocker:
     def increment_type(self):
 
         self.packet_index += 1
-        if self.packet_index < len(self.supported_packets):
-            pass
-        else:
+        if not (self.packet_index < len(self.supported_packets)):
             self.packet_index = 0
+            self.flag_send = True
 
 
 class SerialPortMocker(Thread):
@@ -187,9 +187,9 @@ class SerialPortMocker(Thread):
         self.last_run_time = int(time() * 1000)
         self.n_packets = 0
         self.packet_mocker_interval_ms = config.getint('DEBUG_SERIAL', 'packet_mocker_interval_ms')
-        pass
 
     def run(self):
+        self.logger.info("Starting serial port mocker")
         while True:
             now = int(time() * 1000)
             if now - self.last_run_time > self.packet_mocker_interval_ms:  # run every n milliseconds
@@ -211,8 +211,14 @@ class SerialPortMocker(Thread):
         packet = self.packet_mocker.get_next_packet()
         if packet is None:
             return
+
         self.logger.info("Writing mock packet {}".format(self.n_packets))
         self.logger.info("Packet: {}".format(packet))
         self.n_packets += 1
         self.ser.write(str.encode(packet))
+
+        if self.packet_mocker.flag_send is True:
+            packet = self.packet_mocker.create_uart_packet(0, 0, 0)
+            self.ser.write(str.encode(packet))
+            self.packet_mocker.flag_send = False
 
