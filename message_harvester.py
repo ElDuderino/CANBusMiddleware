@@ -7,11 +7,14 @@ from threading import Thread
 from api_message_writer import APIMessageWriter
 from redis_message_processor import RedisQueueReader
 from sensor_message_item import SensorMessageItem
+from ev_battery_sensor_types import EVBatterySensorTypes
 
 
 class MessageHarvester(Thread):
     """
     The thread to manage the consumption of the payload queue from the serial port reader
+    This class takes the raw payload messages in dict form and enforces the SensorMessageItem contract
+    and parses out special types into individual messages (for alerting, relay switching, etc.)
     """
 
     def __init__(self, payload_queue: Queue, sig_event: Event):
@@ -43,6 +46,50 @@ class MessageHarvester(Thread):
             self.redis_processor = RedisQueueReader(sig_event)
             self.redis_processor.start()
 
+    def process_ev_cell_voltages(self, payload: dict) -> list[SensorMessageItem]:
+        """
+        Process the pipe delimited ext type for the 96 cell voltages
+        :param payload: a payload dict where the data payload is pipe delimited floats
+        :return: a list of SensorMessageItems
+        """
+        ret: list[SensorMessageItem] = list()
+
+        try:
+            voltages = [float(voltage) for voltage in payload['data'].split('|')]
+
+            for i, voltage in enumerate(voltages):
+                mac = int(payload['mac'])
+                timestamp = int(payload['timestamp'])
+                sensor_type = EVBatterySensorTypes.EV_BAT_CELL_VOLTAGES.value + i
+                sensor_data = voltage
+                ret.append(
+                    SensorMessageItem(mac=mac, sensor_type=sensor_type, payload_data=sensor_data, timestamp=timestamp,
+                                      sent=False))
+        except Exception as e:
+            self.logger.log("Error converting EV voltages into sensor messages:{}".format(e))
+
+        return ret
+
+    def process_sensor_messages(self, payload_items: list[dict]) -> list[SensorMessageItem]:
+        """
+        Process all the payload dicts into SensorMessageItem classes / contracts and handle special ext types
+        :param payload_items:
+        :return:
+        """
+        ret: list[SensorMessageItem] = list()
+
+        for payload in payload_items:
+
+            if int(payload['type']) == int(EVBatterySensorTypes.EV_BAT_CELL_VOLTAGES.value):
+                [ret.append(item) for item in self.process_ev_cell_voltages(payload)]
+            else:
+                sensor_message = SensorMessageItem(mac=payload['mac'], sensor_type=payload['type'],
+                                                   timestamp=payload['timestamp'], payload_data=payload['data'],
+                                                   sent=False)
+                ret.append(sensor_message)
+
+        return ret
+
     def run(self):
         self.logger.info("Enter MessageHarvester run()")
         while True:
@@ -56,12 +103,9 @@ class MessageHarvester(Thread):
 
                 payload_list = self.payload_queue.get()
 
-                sensor_message_items = [SensorMessageItem(mac=payload['mac'],
-                                                          sensor_type=payload['type'],
-                                                          timestamp=payload['timestamp'],
-                                                          payload_data=payload['data'],
-                                                          sent=False)
-                                        for payload in payload_list]
+                sensor_message_items = self.process_sensor_messages(payload_list)
+
+                print("N sensor message items:{}".format(len(sensor_message_items)))
 
                 for sensor_message_item in sensor_message_items:
 
@@ -77,6 +121,7 @@ class MessageHarvester(Thread):
                         self.logger.info("Total messages processed:{}".format(total_count))
 
                 if self.enable_redis is True:
+                    pass
                     self.redis_processor.inject_messages(sensor_message_items)
 
                 self.api_sender.enqueue_msgs(sensor_message_items)

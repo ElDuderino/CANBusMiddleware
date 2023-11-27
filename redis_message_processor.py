@@ -8,7 +8,6 @@ import time
 import jsonpickle
 from sensor_message_item import SensorMessageItem
 
-
 class RedisQueueReader(Thread):
     """
     This class pumps SensorModel messages into redis

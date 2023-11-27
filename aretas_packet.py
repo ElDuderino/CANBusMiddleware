@@ -4,27 +4,28 @@ import logging
 
 class AretasPacket:
 
-    @staticmethod
-    def parse_packet(buffer: bytes, default_mac:int = None) -> dict or None:
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
+    def parse_packet(self, buffer: bytes, default_mac:int = None) -> dict or None:
         """
         Parse a bytestring we read in off the UART and
         turn it into a standard packet like Aretas uses for everything
         """
 
-        logger = logging.getLogger(__name__)
-
         str_packet = buffer.decode('utf-8')
         str_tok = str_packet.split(',')
 
         if len(str_tok) != 3:
-            logger.error("Incorrect packet length {0} for string:{1}".format(len(str_tok), str_packet))
+            self.logger.error("Incorrect packet length {0} for string:{1}".format(len(str_tok), str_packet))
             return None
 
         try:
 
             mac_ = int(str_tok[0])
             type_ = int(str_tok[1])
-            data_ = float(str_tok[2])
+            # don't coerce the data to float, since we need to support ext types
+            data_ = str_tok[2]
 
             if default_mac is not None:
                 mac_ = default_mac
@@ -37,7 +38,7 @@ class AretasPacket:
             }
 
         except Exception as e:
-            logger.error("Couldn't parse bytestring {}".format(e))
+            self.logger.error("Couldn't parse bytestring {}".format(e))
             return None
 
 
