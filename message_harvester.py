@@ -107,8 +107,10 @@ class MessageHarvester(Thread):
             if int(payload['type']) == int(EVBatterySensorTypes.EV_BAT_CELL_VOLTAGES.value):
                 [ret.append(item) for item in self.process_ev_cell_voltages(payload)]
             else:
-                sensor_message = SensorMessageItem(mac=payload['mac'], sensor_type=payload['type'],
-                                                   timestamp=payload['timestamp'], payload_data=payload['data'],
+                sensor_message = SensorMessageItem(mac=payload['mac'],
+                                                   sensor_type=payload['type'],
+                                                   timestamp=payload['timestamp'],
+                                                   payload_data=payload['data'],
                                                    sent=False)
                 ret.append(sensor_message)
 
@@ -137,10 +139,13 @@ class MessageHarvester(Thread):
     def output_timing_stats(self):
 
         for mac, stats_list in self.packet_timing_stats.items():
-            timestamps = [item.get_timestamp() for item in stats_list]
-            diffs = self.get_diffs(timestamps)
-            average = sum(diffs) / len(diffs)
-            self.logger.info("Avg timing for {}: {}s".format(mac, str(round(average / 1000, 2))))
+            if len(stats_list) >= 2:
+                timestamps = [item.get_timestamp() for item in stats_list]
+                diffs = self.get_diffs(timestamps)
+                average = sum(diffs) / len(diffs)
+                self.logger.info("Avg timing for {}: {}s".format(mac, str(round(average / 1000, 2))))
+            else:
+                self.logger.info("Not enough data to compute timing stats for:{}".format(mac))
 
     def log_count_stats(self, sensor_message_item: SensorMessageItem):
 
@@ -174,6 +179,9 @@ class MessageHarvester(Thread):
 
                 print("N sensor message items:{}".format(len(sensor_message_items)))
                 print("N payloads received since epoch: {}".format(self.n_payloads_since_epoch))
+                if len(sensor_message_items) < 1:
+                    continue
+
                 last_mac = -1
 
                 for sensor_message_item in sensor_message_items:
