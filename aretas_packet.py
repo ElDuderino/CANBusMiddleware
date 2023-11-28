@@ -7,7 +7,7 @@ class AretasPacket:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def parse_packet(self, buffer: bytes, default_mac:int = None) -> dict or None:
+    def parse_packet(self, buffer: bytes, default_mac: int = None) -> dict or None:
         """
         Parse a bytestring we read in off the UART and
         turn it into a standard packet like Aretas uses for everything
@@ -40,5 +40,3 @@ class AretasPacket:
         except Exception as e:
             self.logger.error("Couldn't parse bytestring {}".format(e))
             return None
-
-

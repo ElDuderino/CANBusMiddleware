@@ -1,6 +1,6 @@
 import configparser
 import logging
-import time
+from time import time
 from logging.handlers import RotatingFileHandler
 from multiprocessing import Event
 
@@ -21,15 +21,20 @@ def main():
     config = configparser.ConfigParser()
     config.read('config.cfg')
 
-    logger.info("Starting Serial Port Mocker:")
-    serial_port_mocker = SerialPortMocker(thread_sig_event)
-    serial_port_mocker.start()
-    logger.info("Serial Port Mocker started.")
+    serial_ports = config.get("DEBUG_SERIAL", "serial_ports", fallback=None).split(',')
+    baud_rate = config.getint("DEBUG_SERIAL", "baud_rate", fallback=115200)
 
-    while serial_port_mocker.is_alive():
-        time.sleep(0.1)
+    serial_port_mockers = list()
 
-    serial_port_mocker.join()
+    for serial_port in serial_ports:
+        logger.info("Starting Serial Port Mocker on {}:".format(serial_port))
+        serial_port_mocker = SerialPortMocker(serial_port, baud_rate, thread_sig_event)
+        serial_port_mocker.start()
+        logger.info("Serial Port Mocker started.")
+        serial_port_mockers.append(serial_port_mocker)
+
+    for serial_port_mocker in serial_port_mockers:
+        serial_port_mocker.join(1000)
 
 
 if __name__ == "__main__":

@@ -109,7 +109,6 @@ class SerialPortReadWriter(Thread):
 
     def run(self):
         last_ran_time = 0
-        last_loop_time = 0
 
         # enqueue bytes into the self.message_queue
         while True:
@@ -127,14 +126,10 @@ class SerialPortReadWriter(Thread):
                 print("Done reading port")
                 print("Time taken:{}ms bytes read:{}".format((now - last_ran_time), n_bytes_read))
                 last_ran_time = now
-                last_loop_time = now
 
             else:
                 if self.thread_sleep is True:
                     time.sleep(self.thread_sleep_time)
-
-            if ((now - last_loop_time) % 1000) == 0:
-                print("Serial waiting for data for:{}".format(now - last_loop_time))
 
     def write_cmd(self, cmd: bytes):
         """

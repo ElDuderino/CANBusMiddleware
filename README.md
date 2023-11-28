@@ -12,7 +12,7 @@ We intend to support other CAN bus sensor data to enable extensive EV, HEV and I
 
 The connections:
 
-EV Battery<--(can bus)-->RP2040 board<--(USB)-->Raspberry Pi<--(Ethernet/WiFI)-->Aretas Cloud
+EV Battery(ies)<--(can bus)-->RP2040 board<--(USB)-->Raspberry Pi<--(Ethernet/WiFI)-->Aretas Cloud
 
 We intend to support the following sensor data:
 1. Hx % - High voltage battery's health
