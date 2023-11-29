@@ -5,12 +5,14 @@ from threading import Thread
 import time
 import serial
 from aretas_packet import AretasPacket
+from AretasPythonAPI.utils import Utils as AretasUtils
 
 
 class ReadLine:
     """
     A 5-10x improvement over pyserial readline
     """
+
     def __init__(self, ser):
         self.buf = bytearray()
         self.ser = ser
@@ -107,13 +109,16 @@ class SerialPortReadWriter(Thread):
 
         self.line_reader = ReadLine(self.ser)
 
+        self.timing_stats: list[int] = list()
+        self.n_payloads_since_epoch = 0
+
     def run(self):
         last_ran_time = 0
 
         # enqueue bytes into the self.message_queue
         while True:
 
-            now = int(time.time() / 1000)
+            now = AretasUtils.now_ms()
 
             if self.sig_event.is_set():
                 self.logger.info("{0} Exiting {1}".format(self.com_id, self.__class__.__name__))
@@ -160,6 +165,12 @@ class SerialPortReadWriter(Thread):
 
         self.latest_data.clear()
 
+        self.log_timing_stats(AretasUtils.now_ms())
+        self.n_payloads_since_epoch += 1
+
+        if (self.n_payloads_since_epoch % 10) == 0:
+            self.output_timing_stats()
+
     def queue_packet(self, packet: dict):
         """
         Queue packets until the flush packet command is received
@@ -167,6 +178,7 @@ class SerialPortReadWriter(Thread):
         :return:
         """
         if int(packet['type']) == 0:
+
             print("Flushing packets")
             self.flush_packets()
         else:
@@ -182,12 +194,10 @@ class SerialPortReadWriter(Thread):
 
         @return:
         """
-        buffer = bytes()
         done = False
         while not done:
 
             buffer = self.line_reader.readline()
-            done = True
             self.attempted_decodes += 1
 
             payload = self.aretas_packet_decoder.parse_packet(buffer, self.self_mac)
@@ -200,3 +210,27 @@ class SerialPortReadWriter(Thread):
                                      .format(self.com_id, self.packet_count, self.attempted_decodes))
 
             return len(buffer)
+
+    def log_timing_stats(self, timestamp: int):
+
+        if len(self.timing_stats) > 200:
+            self.timing_stats.pop(0)
+
+        self.timing_stats.append(timestamp)
+
+    def get_diffs(self, timestamps: list[int]):
+        ret = list()
+        for i, timestamp in enumerate(timestamps):
+            if i < (len(timestamps) - 1):
+                ret.append(timestamps[i + 1] - timestamps[i])
+        return ret
+
+    def output_timing_stats(self):
+
+        if len(self.timing_stats) >= 2:
+
+            diffs = self.get_diffs(self.timing_stats)
+            average = sum(diffs) / len(diffs)
+            self.logger.info("Avg timing for {}: {}s".format(self.com_id, str(round(average / 1000, 2))))
+        else:
+            self.logger.info("Not enough data to compute timing stats for:{}".format(self.com_id))
