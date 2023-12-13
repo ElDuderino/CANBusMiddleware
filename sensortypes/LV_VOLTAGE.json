@@ -1,0 +1,44 @@
+{
+  "docType": "SensorType",
+  "charCode":"LV_VOLTAGE",
+  "charting":true,
+  "display":true,
+  "enabled":true,
+  "gasStatsSupported":false,
+  "label":"LV Supply",
+  "description": "Low Voltage Supply",
+  "rangeHint":{"_max":20.0,"_min":0.0,"step":1.0},
+  "rank":100.0,
+  "sensorColor":"0x15837d",
+  "sensorGasFormula":"",
+  "sensorTypeIntelligence":{
+    "binsInfo":[{
+        "max":9.0,
+        "min":0.0,
+        "strokeStyle":"red"
+      },{
+        "max":11.0,
+        "min":9.0,
+        "recommendation":"",
+        "strokeStyle":"yellow"
+      },{
+        "max":14.0,
+        "min":11.0,
+        "recommendation":"",
+        "strokeStyle":"green"
+      },{
+        "max":15.0,
+        "min":14.0,
+        "recommendation":"",
+        "strokeStyle":"yellow"
+      },{
+        "max":20.0,
+        "min":15.0,
+        "recommendation":"",
+        "strokeStyle":"red"
+      }
+    ]
+  },
+  "typeByte":528,
+  "units":"V"
+}
